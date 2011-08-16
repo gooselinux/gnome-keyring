@@ -1,0 +1,17 @@
+diff -up gnome-keyring-2.28.0/daemon/gkr-daemon-dbus.c.die-on-session-exit gnome-keyring-2.28.0/daemon/gkr-daemon-dbus.c
+--- gnome-keyring-2.28.0/daemon/gkr-daemon-dbus.c.die-on-session-exit	2009-10-14 17:18:03.396005149 -0400
++++ gnome-keyring-2.28.0/daemon/gkr-daemon-dbus.c	2009-10-14 17:15:03.498984754 -0400
+@@ -145,8 +145,12 @@ signal_filter (DBusConnection *conn, DBu
+ 		unregister_daemon_in_session ();
+ 		gkr_daemon_quit ();
+ 		return DBUS_HANDLER_RESULT_HANDLED;
++	} else if (dbus_message_is_signal (msg, DBUS_INTERFACE_LOCAL, "Disconnected")) {
++		unregister_daemon_in_session ();
++		gkr_daemon_quit ();
++		return DBUS_HANDLER_RESULT_HANDLED;
+ 	}
+-	
++
+ 	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+ }
+ 

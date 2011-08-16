@@ -1,0 +1,65 @@
+diff -up gnome-keyring-2.28.2/daemon/util/gkr-location.c.dir-prefix gnome-keyring-2.28.2/daemon/util/gkr-location.c
+--- gnome-keyring-2.28.2/daemon/util/gkr-location.c.dir-prefix	2010-03-22 11:59:32.564436335 -0400
++++ gnome-keyring-2.28.2/daemon/util/gkr-location.c	2010-03-22 12:01:32.603689930 -0400
+@@ -314,6 +314,7 @@ gkr_location_manager_init (GkrLocationMa
+ 	const gchar *env;
+ #endif
+ 	gchar *local = NULL;
++        const gchar *override;
+ 
+ 	pv->volumes_by_name = g_hash_table_new_full (g_str_hash, g_str_equal, 
+ 	                                             NULL, (GDestroyNotify)free_location_volume);
+@@ -337,8 +338,13 @@ gkr_location_manager_init (GkrLocationMa
+ 	if (env && *env)
+ 		local = g_strdup (env);
+ #endif 
+-	if (!local)
+-		local = g_build_filename (home, ".gnome2", NULL);
++	if (!local) {
++		override = g_getenv ("GNOME22_USER_DIR");
++		if (override)
++			local = g_strdup (override);
++		else
++			local = g_build_filename (home, ".gnome2", NULL);
++	}
+ 
+ 	gkr_location_manager_register (locmgr, GKR_LOCATION_NAME_LOCAL, local, _("Home"));
+ 	g_free (local);
+diff -up gnome-keyring-2.28.2/pkcs11/user-store/gck-user-module.c.dir-prefix gnome-keyring-2.28.2/pkcs11/user-store/gck-user-module.c
+--- gnome-keyring-2.28.2/pkcs11/user-store/gck-user-module.c.dir-prefix	2010-03-22 12:02:14.169682738 -0400
++++ gnome-keyring-2.28.2/pkcs11/user-store/gck-user-module.c	2010-03-22 12:03:53.899464620 -0400
+@@ -255,11 +255,18 @@ gck_user_module_real_logout_user (GckMod
+ static GObject* 
+ gck_user_module_constructor (GType type, guint n_props, GObjectConstructParam *props) 
+ {
++	const char *override;
++
+ 	GckUserModule *self = GCK_USER_MODULE (G_OBJECT_CLASS (gck_user_module_parent_class)->constructor(type, n_props, props));	
+ 	g_return_val_if_fail (self, NULL);	
+ 
+-	if (!self->directory)
+-		self->directory = g_build_filename (g_get_home_dir (), ".gnome2", "keyrings", NULL);
++	if (!self->directory) {
++		override = g_getenv ("GNOME22_USER_DIR");
++		if (override)
++			self->directory = g_build_filename (override, "keyrings", NULL);
++		else
++			self->directory = g_build_filename (g_get_home_dir (), ".gnome2", "keyrings", NULL);
++	}
+ 	self->storage = gck_user_storage_new (GCK_MODULE (self), self->directory);
+ 
+ 	return G_OBJECT (self);
+diff -up gnome-keyring-2.28.2/library/gnome-keyring-utils.c.add-dir gnome-keyring-2.28.2/library/gnome-keyring-utils.c
+--- gnome-keyring-2.28.2/library/gnome-keyring-utils.c.add-dir	2010-03-26 14:10:48.859861190 -0400
++++ gnome-keyring-2.28.2/library/gnome-keyring-utils.c	2010-03-26 14:12:14.899794872 -0400
+@@ -73,6 +73,10 @@ const gchar *GNOME_KEYRING_IN_ENVIRONMEN
+ 	"XDG_SESSION_COOKIE",
+ 	"LOGNAME",
+ 	"USERNAME",
++	"GNOME22_USER_DIR",
++	"XDG_DATA_HOME",
++	"XDG_CONFIG_HOME",
++	"XDG_CACHE_DIR",
+ 	NULL
+ };
+ 
